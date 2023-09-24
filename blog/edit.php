@@ -18,6 +18,12 @@ try {
     $stmt = null; // to be prepared
     if(isset($data['id'])) {
         /* update post */
+        $stmt = $db->prepare('SELECT id FROM ' . $db_prefix . 'posts WHERE id = :id');
+        $stmt->bindValue(':id', intval($data['id']), PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        if($stmt->fetch() == false) api_respond(404, null, 'Post ID not found');
+
         $stmt = $db->prepare('UPDATE ' . $db_prefix . 'posts SET title = :title, content = :content WHERE id = :id');
         $stmt->bindValue(':id', intval($data['id']), PDO::PARAM_INT);
     } else {
@@ -27,12 +33,7 @@ try {
     $stmt->bindParam(':title', $data['title']);
     $stmt->bindParam(':content', $data['content']);
     $stmt->execute();
-    if($stmt->rowCount() > 0)
-        api_respond(200, null, null);
-    else if(isset($data['id']))
-        api_respond(404, null, 'Cannot find post ID');
-    else
-        api_respond(500, null, 'Cannot create post due to server error');
+    api_respond(200, null, null);
 } catch(PDOException $e) {
     api_respond_exception($e, 'Cannot create/edit post due to server error');
 }
